@@ -1,0 +1,11 @@
+{
+  "name": "com.urbanfox.scriptableobjectbrowser",
+  "version": "1.0.0",
+  "displayName": "ScriptableObject Browser",
+  "documentationUrl": "https://github.com/huchi57/scriptableobjectbrowser",
+  "author": {
+    "name": "Hu Chi",
+    "email": "huchi.hello@gmail.com"
+  },
+  "description": "An EditorWindow in Unity to browse, edit, and create ScriptableObject instances in projects."
+}
