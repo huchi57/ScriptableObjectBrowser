@@ -9,14 +9,22 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
 {
     public class ScriptableObjectBrowser : EditorWindow
     {
+        [Serializable]
+        public struct EditorData
+        {
+            public string TypeSearch;
+            public string AssetSearch;
+            public bool HideUnityTypes;
+            public string SelectedTypeFullName;
+            public string SelectedTypeShortName;
+            public UnityEngine.Object SelectedAsset;
+        }
+
         private static GUIStyle m_buttonAlightLeftStyle;
         private static GUIStyle m_divider;
 
-        [SerializeField] private string m_typeSearch = string.Empty;
-        [SerializeField] private string m_assetSearch = string.Empty;
-        [SerializeField] private bool m_hideUnityTypes;
-        [SerializeField] private Type m_selectedType;
-        [SerializeField] private UnityEngine.Object m_selectedAsset;
+        [SerializeField]
+        private EditorData m_editorData;
 
         private List<Type> m_allTypes;
         private List<UnityEngine.Object> m_candidateAssets;
@@ -26,6 +34,8 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
         private Vector2 m_assetInspectorScroll;
         private int m_candidateTypeCount = 0;
         private int m_candidateAssetCount = 0;
+
+        private static string EditorDataKey => $"{Application.companyName}/{Application.productName}/{typeof(ScriptableObjectBrowser).Name}/{nameof(m_editorData)}";
 
         private static GUIStyle ButtonAlignLeftStyle
         {
@@ -99,12 +109,12 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
             return ColoredButton(content, color, GUI.skin.button, options);
         }
 
-        private static List<UnityEngine.Object> GetInstancesOfType(Type type)
+        private static List<UnityEngine.Object> GetInstancesOfType(string typeName)
         {
             var results = new List<UnityEngine.Object>();
-            if (type != null)
+            if (typeName != null)
             {
-                var guids = AssetDatabase.FindAssets($"t:{type.Name}");
+                var guids = AssetDatabase.FindAssets($"t:{typeName}");
                 if (guids != null && guids.Length > 0)
                 {
                     for (int i = 0; i < guids.Length; i++)
@@ -167,10 +177,20 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
 
                 m_allTypes.AddRange(newTypes);
             }
-            if (m_selectedType == null)
+            m_editorData = EditorPrefs.HasKey(EditorDataKey) ? JsonUtility.FromJson<EditorData>(EditorPrefs.GetString(EditorDataKey)) : new EditorData()
             {
-                m_selectedAsset = null;
+                TypeSearch = string.Empty,
+                AssetSearch = string.Empty,
+            };
+            if (string.IsNullOrEmpty(m_editorData.SelectedTypeFullName))
+            {
+                m_editorData.SelectedAsset = null;
             }
+        }
+
+        private void OnDisable()
+        {
+            EditorPrefs.SetString(EditorDataKey, JsonUtility.ToJson(m_editorData));
         }
 
         private void OnGUI()
@@ -190,8 +210,8 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
         {
             GUILayout.BeginVertical(GUILayout.MaxWidth(200));
             GUILayout.Label("Search for Types", EditorStyles.boldLabel);
-            m_typeSearch = SearchBox(string.Empty, m_typeSearch);
-            m_hideUnityTypes = EditorGUILayout.Toggle("Hide Unity Types", m_hideUnityTypes);
+            m_editorData.TypeSearch = SearchBox(string.Empty, m_editorData.TypeSearch);
+            m_editorData.HideUnityTypes = EditorGUILayout.Toggle("Hide Unity Types", m_editorData.HideUnityTypes);
             EditorGUILayout.Space();
             GUILayout.Label($"ScriptableObjects ({m_candidateTypeCount})", EditorStyles.boldLabel);
             m_candidateTypeCount = 0;
@@ -199,22 +219,23 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
             m_typeSelectorScroll = GUILayout.BeginScrollView(m_typeSelectorScroll);
             if (m_allTypes != null && m_allTypes.Count > 0)
             {
-                var cachedTypeSearch = m_typeSearch.ToLower();
+                var cachedTypeSearch = m_editorData.TypeSearch.ToLower();
                 foreach (var type in m_allTypes)
                 {
                     if (type.FullName.ToLower().Contains(cachedTypeSearch))
                     {
-                        if (!type.FullName.Contains("Unity") || !m_hideUnityTypes)
+                        if (!type.FullName.Contains("Unity") || !m_editorData.HideUnityTypes)
                         {
                             m_candidateTypeCount++;
                             GUILayout.BeginHorizontal();
-                            if (ColoredButton(new GUIContent(type.Name, type.FullName), m_selectedType == type ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
+                            if (ColoredButton(new GUIContent(type.Name, type.FullName), m_editorData.SelectedTypeFullName == type.FullName ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
                             {
-                                if (m_selectedType != type)
+                                if (m_editorData.SelectedTypeFullName != type.FullName)
                                 {
-                                    m_selectedAsset = null;
+                                    m_editorData.SelectedAsset = null;
                                 }
-                                m_selectedType = type;
+                                m_editorData.SelectedTypeFullName = type.FullName;
+                                m_editorData.SelectedTypeShortName = type.Name;
                             }
                             if (ColoredButton(new GUIContent("New"), Color.green, GUILayout.Width(45)))
                             {
@@ -239,24 +260,24 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
         {
             GUILayout.BeginVertical(GUILayout.MaxWidth(200));
             GUILayout.Label("Search Assets from the Selected Type", EditorStyles.boldLabel);
-            m_assetSearch = SearchBox(string.Empty, m_assetSearch);
+            m_editorData.AssetSearch = SearchBox(string.Empty, m_editorData.AssetSearch);
             EditorGUILayout.Space();
-            if (m_selectedType == null)
+            if (string.IsNullOrEmpty(m_editorData.SelectedTypeFullName))
             {
                 EditorGUILayout.HelpBox($"Select a type on the left column first.", MessageType.Info);
             }
             else
             {
                 // Potentially expensive function to be called every frame
-                m_candidateAssets = GetInstancesOfType(m_selectedType);
+                m_candidateAssets = GetInstancesOfType(m_editorData.SelectedTypeFullName);
 
-                GUILayout.Label($"{m_selectedType.Name} ({m_candidateAssetCount})", EditorStyles.boldLabel);
+                GUILayout.Label($"{m_editorData.SelectedTypeShortName} ({m_candidateAssetCount})", EditorStyles.boldLabel);
                 m_candidateAssetCount = 0;
                 DrawHorizontalLine(1, Color.gray);
                 m_assetSelectorScroll = GUILayout.BeginScrollView(m_assetSelectorScroll);
                 if (m_candidateAssets != null && m_candidateAssets.Count > 0)
                 {
-                    var cachedAssetSearch = m_assetSearch.ToLower();
+                    var cachedAssetSearch = m_editorData.AssetSearch.ToLower();
                     foreach (var asset in m_candidateAssets)
                     {
                         // An asset might be deleted when the window is opened - make sure to check for null reference here
@@ -266,9 +287,9 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
                             {
                                 m_candidateAssetCount++;
                                 GUILayout.BeginHorizontal();
-                                if (ColoredButton(new GUIContent(asset.name), m_selectedAsset == asset ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
+                                if (ColoredButton(new GUIContent(asset.name), m_editorData.SelectedAsset == asset ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
                                 {
-                                    m_selectedAsset = asset;
+                                    m_editorData.SelectedAsset = asset;
                                 }
                                 if (GUILayout.Button("Ping", GUILayout.Width(45)))
                                 {
@@ -281,7 +302,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
                 }
                 else
                 {
-                    EditorGUILayout.HelpBox($"No asset instances of {m_selectedType.Name} can be found.", MessageType.Info);
+                    EditorGUILayout.HelpBox($"No asset instances of {m_editorData.SelectedTypeShortName} can be found.", MessageType.Info);
                 }
                 GUILayout.EndScrollView();
             }
@@ -291,16 +312,16 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
         private void DrawAssetInspector()
         {
             GUILayout.BeginVertical();
-            if (m_selectedAsset == null)
+            if (m_editorData.SelectedAsset == null)
             {
                 EditorGUILayout.HelpBox($"Select a type and an asset from the left columns first.", MessageType.Info);
             }
             else
             {
-                GUILayout.Label($"{m_selectedAsset.name}", EditorStyles.boldLabel);
+                GUILayout.Label($"{m_editorData.SelectedAsset.name}", EditorStyles.boldLabel);
                 DrawHorizontalLine(1, Color.gray);
                 m_assetInspectorScroll = GUILayout.BeginScrollView(m_assetInspectorScroll);
-                var editor = UnityEditor.Editor.CreateEditor(m_selectedAsset);
+                var editor = UnityEditor.Editor.CreateEditor(m_editorData.SelectedAsset);
                 if (editor != null)
                 {
                     editor.OnInspectorGUI();
