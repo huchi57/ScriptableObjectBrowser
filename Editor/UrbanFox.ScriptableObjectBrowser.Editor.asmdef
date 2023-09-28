@@ -1,0 +1,16 @@
+{
+    "name": "UrbanFox.ScriptableObjectBrowser.Editor",
+    "rootNamespace": "UrbanFox.ScriptableObjectBrowser.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
