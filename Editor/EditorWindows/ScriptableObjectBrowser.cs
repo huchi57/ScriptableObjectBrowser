@@ -14,6 +14,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
 
         [SerializeField] private string m_typeSearch = string.Empty;
         [SerializeField] private string m_assetSearch = string.Empty;
+        [SerializeField] private bool m_hideUnityTypes;
         [SerializeField] private Type m_selectedType;
         [SerializeField] private UnityEngine.Object m_selectedAsset;
 
@@ -190,6 +191,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
             GUILayout.BeginVertical(GUILayout.MaxWidth(200));
             GUILayout.Label("Search for Types", EditorStyles.boldLabel);
             m_typeSearch = SearchBox(string.Empty, m_typeSearch);
+            m_hideUnityTypes = EditorGUILayout.Toggle("Hide Unity Types", m_hideUnityTypes);
             EditorGUILayout.Space();
             GUILayout.Label($"ScriptableObjects ({m_candidateTypeCount})", EditorStyles.boldLabel);
             m_candidateTypeCount = 0;
@@ -202,23 +204,26 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
                 {
                     if (type.FullName.ToLower().Contains(cachedTypeSearch))
                     {
-                        m_candidateTypeCount++;
-                        GUILayout.BeginHorizontal();
-                        if (ColoredButton(new GUIContent(type.Name, type.FullName), m_selectedType == type ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
+                        if (!type.FullName.Contains("Unity") || !m_hideUnityTypes)
                         {
-                            if (m_selectedType != type)
+                            m_candidateTypeCount++;
+                            GUILayout.BeginHorizontal();
+                            if (ColoredButton(new GUIContent(type.Name, type.FullName), m_selectedType == type ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
                             {
-                                m_selectedAsset = null;
+                                if (m_selectedType != type)
+                                {
+                                    m_selectedAsset = null;
+                                }
+                                m_selectedType = type;
                             }
-                            m_selectedType = type;
+                            if (ColoredButton(new GUIContent("New"), Color.green, GUILayout.Width(45)))
+                            {
+                                var newInstance = CreateInstance(type);
+                                var instancePath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(GetCurrentFolderInProjectPanel(), $"{type.Name}.asset"));
+                                ProjectWindowUtil.CreateAsset(newInstance, instancePath);
+                            }
+                            GUILayout.EndHorizontal();
                         }
-                        if (ColoredButton(new GUIContent("New"), Color.green, GUILayout.Width(45)))
-                        {
-                            var newInstance = CreateInstance(type);
-                            var instancePath = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(GetCurrentFolderInProjectPanel(), $"{type.Name}.asset"));
-                            ProjectWindowUtil.CreateAsset(newInstance, instancePath);
-                        }
-                        GUILayout.EndHorizontal();
                     }
                 }
             }
