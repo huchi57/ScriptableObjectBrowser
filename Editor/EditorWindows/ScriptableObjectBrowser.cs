@@ -287,7 +287,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
                             {
                                 m_candidateAssetCount++;
                                 GUILayout.BeginHorizontal();
-                                if (ColoredButton(new GUIContent(asset.name), m_editorData.SelectedAsset == asset ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
+                                if (ColoredButton(new GUIContent(asset.name, AssetDatabase.GetAssetPath(asset)), m_editorData.SelectedAsset == asset ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
                                 {
                                     m_editorData.SelectedAsset = asset;
                                 }
