@@ -15,6 +15,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
             public string TypeSearch;
             public string AssetSearch;
             public bool HideUnityTypes;
+            public bool DisplayTypeFullName;
             public string SelectedTypeFullName;
             public string SelectedTypeShortName;
             public UnityEngine.Object SelectedAsset;
@@ -212,6 +213,7 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
             GUILayout.Label("Search for Types", EditorStyles.boldLabel);
             m_editorData.TypeSearch = SearchBox(string.Empty, m_editorData.TypeSearch);
             m_editorData.HideUnityTypes = EditorGUILayout.Toggle("Hide Unity Types", m_editorData.HideUnityTypes);
+            m_editorData.DisplayTypeFullName = EditorGUILayout.Toggle("Display Type Full Name", m_editorData.DisplayTypeFullName);
             EditorGUILayout.Space();
             GUILayout.Label($"ScriptableObjects ({m_candidateTypeCount})", EditorStyles.boldLabel);
             m_candidateTypeCount = 0;
@@ -228,7 +230,8 @@ namespace UrbanFox.ScriptableObjectBrowser.Editor
                         {
                             m_candidateTypeCount++;
                             GUILayout.BeginHorizontal();
-                            if (ColoredButton(new GUIContent(type.Name, type.FullName), m_editorData.SelectedTypeFullName == type.FullName ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
+                            var buttonGUIContent = new GUIContent(m_editorData.DisplayTypeFullName ? type.FullName : type.Name, type.FullName);
+                            if (ColoredButton(buttonGUIContent, m_editorData.SelectedTypeFullName == type.FullName ? Color.yellow : Color.white, ButtonAlignLeftStyle, GUILayout.Width(205)))
                             {
                                 if (m_editorData.SelectedTypeFullName != type.FullName)
                                 {
