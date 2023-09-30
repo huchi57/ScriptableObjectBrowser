@@ -1,5 +1,5 @@
 # ScriptableObject Browser
-An EditorWindow in Unity to browse, edit, and create ScriptableObject instances in projects.
+An Unity Editor tool to browse, edit, and create ScriptableObject instances in projects.
 
 | <img src="Images~/img-scriptableobjectbrowser-demo-1.png" alt="Example-in-the-editor" width="80%"> |
 | --- |
@@ -32,7 +32,7 @@ After installation, you should be able to access **ScriptableObject Browser** by
 - Asset Inspector
   - If an asset is selected, this panel will show the details and fields of that asset, as if you are editing it in the usual Inspector panel.
  
-Here are the field names and their descriptions in the Editor Window:
+Here are the field names and their descriptions in the window:
 
 | Field | Description |
 | --- | --- |
