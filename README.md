@@ -1,5 +1,5 @@
 # ScriptableObject Browser
-An Unity Editor tool to browse, edit, and create ScriptableObject instances in projects.
+A tool in the Unity Editor to search, create, browse, and edit ScriptableObject instances in projects.
 
 | <img src="Images~/img-scriptableobjectbrowser-demo-1.png" alt="Example-in-the-editor" width="80%"> |
 | --- |
